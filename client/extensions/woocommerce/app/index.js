@@ -24,6 +24,7 @@ import { getSelectedSiteId } from 'state/ui/selectors';
 import { isLoaded as arePluginsLoaded } from 'state/plugins/installed/selectors';
 import Main from 'components/main';
 import Placeholder from './dashboard/placeholder';
+import PageViewTracker from 'lib/analytics/page-view-tracker';
 import QueryJetpackPlugins from 'components/data/query-jetpack-plugins';
 import RequiredPluginsInstallView from 'woocommerce/app/dashboard/required-plugins-install-view';
 import WooCommerceColophon from 'woocommerce/components/woocommerce-colophon';
@@ -31,6 +32,8 @@ import WooCommerceColophon from 'woocommerce/components/woocommerce-colophon';
 class App extends Component {
 	static propTypes = {
 		allRequiredPluginsActive: PropTypes.bool,
+		analyticsPath: PropTypes.string,
+		analyticsTitle: PropTypes.string,
 		canUserManageOptions: PropTypes.bool.isRequired,
 		children: PropTypes.element.isRequired,
 		documentTitle: PropTypes.string,
@@ -119,6 +122,8 @@ class App extends Component {
 
 	render = () => {
 		const {
+			analyticsPath,
+			analyticsTitle,
 			canUserManageOptions,
 			hasPendingAutomatedTransfer,
 			isAtomicSite,
@@ -149,6 +154,7 @@ class App extends Component {
 		return (
 			<div className={ className }>
 				<DocumentHead title={ documentTitle } />
+				<PageViewTracker path={ analyticsPath } title={ analyticsTitle } />
 				<QueryJetpackPlugins siteIds={ [ siteId ] } />
 				{ this.maybeRenderChildren() }
 				<WooCommerceColophon />

@@ -145,6 +145,7 @@ const wrapSettingsForm = getFormSettings => SettingsForm => {
 		submitForm = () => {
 			const {
 				fields,
+				jetpackFieldsToUpdate,
 				jetpackSiteSettingsAPIVersion,
 				settingsFields,
 				siteId,
@@ -158,10 +159,7 @@ const wrapSettingsForm = getFormSettings => SettingsForm => {
 			const apiVersion = siteIsJetpack ? jetpackSiteSettingsAPIVersion : '1.4';
 			this.props.saveSiteSettings( siteId, { ...siteFields, apiVersion } );
 			if ( jetpackSettingsUISupported ) {
-				const fieldsToUpdate = /^error_/.test( fields.lang_id )
-					? omit( fields, 'lang_id' )
-					: fields;
-				this.props.saveJetpackSettings( siteId, pick( fieldsToUpdate, settingsFields.jetpack ) );
+				this.props.saveJetpackSettings( siteId, jetpackFieldsToUpdate );
 			}
 		};
 
@@ -260,12 +258,13 @@ const wrapSettingsForm = getFormSettings => SettingsForm => {
 	}
 
 	const connectComponent = connect(
-		state => {
+		( state, { fields } ) => {
 			const siteId = getSelectedSiteId( state );
 			let isSavingSettings = isSavingSiteSettings( state, siteId );
 			let isSaveRequestSuccessful = isSiteSettingsSaveSuccessful( state, siteId );
 			let settings = getSiteSettings( state, siteId );
 			let isRequestingSettings = isRequestingSiteSettings( state, siteId ) && ! settings;
+			let jetpackFieldsToUpdate;
 			const siteSettingsSaveError = getSiteSettingsSaveError( state, siteId );
 			const settingsFields = {
 				site: keys( settings ),
@@ -283,11 +282,17 @@ const wrapSettingsForm = getFormSettings => SettingsForm => {
 					jetpackSiteSettingsAPIVersion = '1.4';
 				}
 			}
+
 			if ( jetpackSettingsUISupported ) {
 				const jetpackSettings = getJetpackSettings( state, siteId );
-				isSavingSettings = isSavingSettings || isUpdatingJetpackSettings( state, siteId );
 				settings = { ...settings, ...jetpackSettings };
 				settingsFields.jetpack = keys( jetpackSettings );
+				const fieldsToUpdate = /^error_/.test( fields.lang_id )
+					? omit( fields, 'lang_id' )
+					: fields;
+				jetpackFieldsToUpdate = pick( fieldsToUpdate, settingsFields.jetpack );
+				isSavingSettings =
+					isSavingSettings || isUpdatingJetpackSettings( state, siteId, jetpackFieldsToUpdate );
 				isRequestingSettings =
 					isRequestingSettings ||
 					( isRequestingJetpackSettings( state, siteId ) && ! jetpackSettings );
@@ -297,6 +302,7 @@ const wrapSettingsForm = getFormSettings => SettingsForm => {
 				isRequestingSettings,
 				isSavingSettings,
 				isSaveRequestSuccessful,
+				jetpackFieldsToUpdate,
 				jetpackSiteSettingsAPIVersion,
 				siteIsJetpack: isJetpack,
 				siteSettingsSaveError,
